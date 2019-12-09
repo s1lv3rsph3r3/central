@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/s1lv3rsph3r3/central/issues"
   },
-  "homepage": "https://github.com/s1lv3rsph3r3/central#readme"
+  "homepage": "https://github.com/s1lv3rsph3r3/central#readme",
+  "devDependencies": {
+    "eslint": "^6.7.2",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.19.1"
+  }
 }
