@@ -1,204 +1,176 @@
 
 const HelperFunction = (function start() {
+  const build = () => {
+    function Node(absPath) {
+      // The parent (can be NULL)
+      this.parent;
 
-const build = () => {
+      // The absolute path
+      this.path = absPath;
 
-function Node(absPath) {
-  // The parent (can be NULL)
-  this.parent;
+      // The list of child Node(s)
+      this.children = [];
 
-  // The absolute path
-  this.path = absPath;
+      // The current depth in the tree
+      this.level = 0;
 
-  // The list of child Node(s)
-  this.children = [];
-
-  // The current depth in the tree
-  this.level = 0;
-
-  Node.prototype.increaseDepthOfChildren = function(){
-    for(index in this.children){
-      this.children[index].level += 1;
-      this.children[index].increaseDepthOfChildren();
+      Node.prototype.increaseDepthOfChildren = function () {
+        for (index in this.children) {
+          this.children[index].level += 1;
+          this.children[index].increaseDepthOfChildren();
+        }
+      };
     }
-  }
-}
 
 
-function Tree() {
-  // max level of the tree structure
-  this.maxLevel = 0;
+    function Tree() {
+      // max level of the tree structure
+      this.maxLevel = 0;
 
-  // node map is a <key, value> store of the path and the node
-  this.nodeMap = {};
+      // node map is a <key, value> store of the path and the node
+      this.nodeMap = {};
 
-  // node of the absolute root of the tree
-  this.rootNode;
-}
-
-
-function Cell(data) {
-  this.data = data;
-  this.next = null;
-}
+      // node of the absolute root of the tree
+      this.rootNode;
+    }
 
 
-/*
+    function Cell(data) {
+      this.data = data;
+      this.next = null;
+    }
+
+
+    /*
  * Please note this is vulnerable to cyclic references
  * Assumption is made that there is always a parent until the parent is the same as the previous,
  * in which case we assume that we have reached the root of the filesytem.
  * This is NOT a perfect approach.
  */
 
-// .root is a file tag to determine the base directory of the entire project
-const rootTag = '.root';
+    // .root is a file tag to determine the base directory of the entire project
+    const rootTag = '.root';
 
-// .config tag is a file tag to determine the config directory of the project
-const configTag = '.config';
+    // .config tag is a file tag to determine the config directory of the project
+    const configTag = '.config';
 
-// Node modules should be ignored as we don't care about the files or code that exist in here
-const nodeModuleDir = 'node_modules';
+    // Node modules should be ignored as we don't care about the files or code that exist in here
+    const nodeModuleDir = 'node_modules';
 
-// Booleans to determine root of filesystem or baseproject directory
-let hasReachedRoot = false;
-let hasReachedBaseProj = false;
+    // Booleans to determine root of filesystem or baseproject directory
+    let hasReachedRoot = false;
+    let hasReachedBaseProj = false;
 
-const fs = require('fs');
-const path = require('path');
+    const fs = require('fs');
+    const path = require('path');
 
-// create a tree
-const tree = new Tree();
+    // create a tree
+    const tree = new Tree();
 
-const listOfFiles = [];
-let currentPath = path.resolve(__dirname);
+    const listOfFiles = [];
+    let currentPath = path.resolve(__dirname);
 
-// Create a node and add this to the tree
-let node = new Node(currentPath);
+    // Create a node and add this to the tree
+    let node = new Node(currentPath);
 
-// Update the nodeMap in the tree
-tree.nodeMap[currentPath] = node;
+    // Update the nodeMap in the tree
+    tree.nodeMap[currentPath] = node;
 
-// Check for the .root tag
-let files = fs.readdirSync(currentPath);
-for (index in files) {
-  if (files[index] === rootTag) {
-    hasReachedBaseProj = true;
-  }
-}
-
-while (!hasReachedBaseProj && !hasReachedRoot) {
-  const temporaryPath = path.resolve(currentPath, '..');
-  if (temporaryPath !== currentPath) {
-    // new node
-    node = new Node(temporaryPath);
-    // add the node to the nodeMap
-    tree.nodeMap[temporaryPath] = node;
-    // set the path - true
-    // update the children with the currentPath
-    node.children.push(tree.nodeMap[currentPath]);
-    // update the parent of the child with the temporaryPath
-    tree.nodeMap[currentPath].parent = node;
-    // update the numeric level of the child
-    const value = tree.nodeMap[currentPath].level + 1;
-    tree.nodeMap[currentPath].level = value;
-    tree.nodeMap[currentPath].increaseDepthOfChildren();
-    tree.maxLevel += 1;
-
-    // assign to the currentPath
-    currentPath = temporaryPath;
-
-    // list the files and find a .root tag
-    files = fs.readdirSync(currentPath/* give a path here */);
-
+    // Check for the .root tag
+    let files = fs.readdirSync(currentPath);
     for (index in files) {
       if (files[index] === rootTag) {
-        // found the root base project
         hasReachedBaseProj = true;
-        tree.rootNode = node;
-        // current directory has the root tag - base dir of the entire project
-        // flag the current absolute path as the root directory of the project
-        // keep track of how many steps up and how many steps down to dynamically build the path
       }
     }
-  } else {
-    // can't travel any further
-    // set the root to true
-    tree.rootNode = node;
-    hasReachedRoot = true;
-  }
-}
 
-// at each stage of the up process look for a tag to determine the project root
-// build the tree down
-// at each stage down look for a tag to determine the project config
+    while (!hasReachedBaseProj && !hasReachedRoot) {
+      const temporaryPath = path.resolve(currentPath, '..');
+      if (temporaryPath !== currentPath) {
 
-// set a linked list of places to visit
-// get the starting point
-// add to the linked list of places to visit
-// while the linked list is not empty
-// -> set current position to the next item in the list
-// -> remove the position from the list
-// -> check if it's already been visited
-// -> check if it's the target destination (?? not really applicable as we are building not searching)
-// -> add a list of directories to the list of places to visit
-// -> set the current position as visited
+        // New Node
+        node = new Node(temporaryPath);
 
-// console.log(tree.rootNode.path);
-// tree.rootNode.path is the base directory of the project (starting point)
+        // Add the Node to the Tree
+        tree.nodeMap[temporaryPath] = node;
 
-/* contains absolute path of the directory and pointer to the next cell if applicable */
+        // Add the currentPath to the list of children of this new Node
+        node.children.push(tree.nodeMap[currentPath]);
 
-// let placesToVisit = new LinkedList();
-// let head = placesToVisit.add(tree.rootNode.path);
+        // Update the parent of the currentPath to be the new Node
+        tree.nodeMap[currentPath].parent = node;
 
-// let filePath = '../../config';
-// file needs to be relative based on location from this module... oh dear me - problems
+        // Update the depth for each child in the tree
+        const value = tree.nodeMap[currentPath].level + 1;
+        tree.nodeMap[currentPath].level = value;
+        tree.nodeMap[currentPath].increaseDepthOfChildren();
 
-let str = '';
-for (let i = 0; i < tree.maxLevel; i++) {
-  str += '../';
-}
+        // Update the maximum depth of the tree
+        tree.maxLevel += 1;
 
-// so if all the paths going in are -
-// this should be made better for windows operating system
-const test = `${tree.rootNode.path}/`; // use the tree.rootNode.path to make the path to take away
-// then remove the start of the path and resolve another way
+        // Update the currentPath
+        currentPath = temporaryPath;
 
-// build down should exclude all files beginning with a dot - not considered directory
-// build down should exclude all files that exist as a symlink - not considered a true directory
-// build down should continue adding to the nodes in the tree to build a full application tree
-let head = new Cell(tree.rootNode.path);
-while (head !== null) {
-  const files = fs.readdirSync(head.data);
-  for (index in files) {
-    if (files[index] !== nodeModuleDir && files[index] !== '.git' && files[index] !== '.nyc_output') {
-      let dirPath = path.resolve(str, (head.data).replace(test, ''), files[index]);
-      const isDir = fs.lstatSync(dirPath).isDirectory();
-      if (isDir) {
-        console.log(dirPath);
-        // add to the head
-        if (head.next === null) {
-          head.next = new Cell(dirPath);
-        } else {
-          // get to the tail
-          let tail = head.next;
-          while (tail.next !== null) {
-            tail = tail.next;
+        // Search for a .root tag to determine the base project directory
+        files = fs.readdirSync(currentPath);
+        for (index in files) {
+          if (files[index] === rootTag) {
+
+            // Reached the base project
+            hasReachedBaseProj = true;
+
+            // Set the root node as the base project directory
+            tree.rootNode = node;
           }
-          tail.next = new Cell(dirPath);
+        }
+      } else {
+        // Reached the furthest up possible (root)
+        tree.rootNode = node;
+        hasReachedRoot = true;
+      }
+    }
+
+    // If there is no base project directory then throw an error
+    if (!hasReachedBaseProj) {
+      throw (new Error('No base project directory found. Are you sure a .root tag exists in your project?'));
+    }
+
+    // ERR: Consider how slashes impact a Windows OS?
+    const baseDirPath = `${tree.rootNode.path}/`;
+
+    // build down should exclude all files beginning with a dot - not considered directory
+    // build down should exclude all files that exist as a symlink - not considered a true directory
+    // build down should continue adding to the nodes in the tree to build a full application tree
+    let head = new Cell(tree.rootNode.path);
+    while (head !== null) {
+      const files = fs.readdirSync(head.data);
+      for (index in files) {
+        if (files[index] !== nodeModuleDir && files[index] !== '.git' && files[index] !== '.nyc_output') {
+          const dirPath = path.resolve((head.data).replace(baseDirPath, ''), files[index]);
+          const isDir = fs.lstatSync(dirPath).isDirectory();
+          if (isDir) {
+            console.log(dirPath);
+            // add to the head
+            if (head.next === null) {
+              head.next = new Cell(dirPath);
+            } else {
+              // get to the tail
+              let tail = head.next;
+              while (tail.next !== null) {
+                tail = tail.next;
+              }
+              tail.next = new Cell(dirPath);
+            }
+          }
         }
       }
+      head = head.next;
     }
-  }
-  head = head.next;
-}
+  };
 
-};
-
-return {
-  build,
-};
-
+  return {
+    build,
+  };
 }());
 
 module.exports = { HelperFunction };
