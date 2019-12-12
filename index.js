@@ -231,7 +231,7 @@ const BRC487 = (function start() {
   };
 
   return {
-    resolve,
+    commute,
   };
 }());
 
