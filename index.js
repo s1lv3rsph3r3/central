@@ -230,8 +230,13 @@ const BRC487 = (function start() {
     return listOfOptions[0].substring(0, positionOfExtension);
   };
 
+  const getAbsolutePathToBaseProject = () => {
+    return tree.nodeMap[tree.rootNode];
+  };
+
   return {
     commute,
+    getAbsolutePathToBaseProject,
   };
 }());
 
