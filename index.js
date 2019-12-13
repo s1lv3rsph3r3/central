@@ -231,7 +231,7 @@ const BRC487 = (function start() {
   };
 
   const getAbsolutePathToBaseProject = () => {
-    return tree.nodeMap[tree.rootNode];
+    return tree.rootNode.path;
   };
 
   return {
